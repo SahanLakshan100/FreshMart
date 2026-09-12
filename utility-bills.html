@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Utility Bill Payments · FreshMart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="top-bar"><div><i class="fas fa-bolt"></i> Simple, secure bill payments</div><div class="top-links"><a href="index.html">Home</a><a href="cart.html">Cart</a></div></div>
+  <header class="main-header"><div class="logo-area"><a href="index.html"><div class="logo-icon"><i class="fas fa-shopping-basket"></i></div></a><div class="logo-text"><h1>FreshMart</h1><span>ONLINE SUPERMARKET</span></div></div><div class="header-actions"><a href="products.html" class="icon-btn"><i class="fas fa-search"></i></a><a href="cart.html" class="icon-btn"><i class="fas fa-shopping-cart"></i><span class="cart-badge" id="headerCartCount">0</span></a></div></header>
+  <nav class="nav-menu"><ul><li><a href="index.html">Home</a></li><li><a href="products.html">All Products</a></li><li><a href="promotions.html">Promotions</a></li><li><a href="keells-products.html">Keells Products</a></li><li><a href="utility-bills.html" class="active">Utility Bill Payments</a></li><li><a href="community.html">Community</a></li></ul></nav>
+  <main class="container page-content"><div class="page-header"><h1>Utility Bill Payments</h1><p>Pay essential household bills while you shop, all in one place.</p></div><div class="utility-layout"><form class="utility-form" onsubmit="event.preventDefault(); document.getElementById('billMessage').textContent='Your bill details are ready to review.'"><label for="provider">Select service</label><select id="provider"><option>Electricity</option><option>Water</option><option>Mobile</option><option>Internet</option></select><label for="accountNumber">Account or mobile number</label><input id="accountNumber" type="text" placeholder="Enter your account number" required><label for="billAmount">Amount</label><input id="billAmount" type="number" min="1" step="0.01" placeholder="0.00" required><button class="btn-primary" type="submit">Continue securely <i class="fas fa-arrow-right"></i></button><p id="billMessage" class="form-message"></p></form><div class="utility-points"><div><i class="fas fa-lock"></i><div><strong>Secure payments</strong><span>Your details are handled safely.</span></div></div><div><i class="fas fa-receipt"></i><div><strong>Digital receipts</strong><span>Keep your confirmation for your records.</span></div></div><div><i class="fas fa-clock"></i><div><strong>Quick and convenient</strong><span>Pay from home in a few simple steps.</span></div></div></div></div></main>
+  <footer class="main-footer"><div class="footer-bottom">&copy; 2025 FreshMart. All rights reserved.</div></footer>
+  <script src="js/cart.js"></script><script>CartManager.updateCartBadge();</script>
+</body>
+</html>

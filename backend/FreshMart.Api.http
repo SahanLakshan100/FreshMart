@@ -1,0 +1,6 @@
+@FreshMart.Api_HostAddress = http://localhost:5171
+
+GET {{FreshMart.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

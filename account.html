@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account · FreshMart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>🚚 Free delivery on orders over LKR 7,500</div>
+    <div class="top-links"><a href="#">FAQ</a><a href="#">Contact Us</a><a href="#">Store Locator</a><a href="#">Help</a></div>
+  </div>
+
+  <header class="main-header">
+    <div class="logo-area">
+      <a href="index.html"><div class="logo-icon"><i class="fas fa-shopping-basket"></i></div></a>
+      <div class="logo-text"><h1>FreshMart</h1><span>ONLINE SUPERMARKET</span></div>
+    </div>
+    <div class="header-actions" style="margin-left:auto;">
+      <a href="cart.html" class="icon-btn"><i class="fas fa-shopping-cart"></i><span class="cart-badge" id="headerCartCount">0</span></a>
+    </div>
+  </header>
+
+  <div class="container page-content">
+    <div id="accountContent"></div>
+  </div>
+
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div class="footer-col"><h3>FreshMart</h3><p>Your everyday online supermarket.</p></div>
+      <div class="footer-col"><h4>Quick Links</h4><a href="index.html">Home</a><a href="products.html">Products</a><a href="cart.html">Cart</a></div>
+      <div class="footer-col"><h4>Help</h4><a href="#">FAQ</a><a href="#">Contact Us</a><a href="#">Store Locator</a></div>
+      <div class="footer-col"><h4>Follow Us</h4>
+        <div class="social-links"><a href="#"><i class="fab fa-facebook"></i></a><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-twitter"></i></a></div>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2025 FreshMart. All rights reserved.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    (function () {
+      const container = document.getElementById('accountContent');
+      const user = Auth.getCurrentUser();
+
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const cart = CartManager.getCart();
+
+      container.innerHTML = `
+        <div class="account-header">
+          <div class="account-avatar">${user.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <h1>Hello, ${user.name.split(' ')[0]} 👋</h1>
+            <p>${user.email}</p>
+          </div>
+          <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+        </div>
+
+        <div class="account-grid">
+          ${user.role === 'admin' ? `
+          <a href="admin.html" class="account-card">
+            <i class="fas fa-sliders-h"></i>
+            <h3>Admin Panel</h3>
+            <p>Manage products, categories, and users</p>
+          </a>` : ''}
+          <a href="cart.html" class="account-card">
+            <i class="fas fa-shopping-cart"></i>
+            <h3>My Cart</h3>
+            <p>${cart.length} item(s) waiting</p>
+          </a>
+          <a href="#" class="account-card">
+            <i class="fas fa-box"></i>
+            <h3>Orders</h3>
+            <p>View your order history</p>
+          </a>
+          <a href="#" class="account-card">
+            <i class="fas fa-map-marker-alt"></i>
+            <h3>Addresses</h3>
+            <p>Manage delivery addresses</p>
+          </a>
+          <a href="#" class="account-card">
+            <i class="fas fa-heart"></i>
+            <h3>Wishlist</h3>
+            <p>Your saved items</p>
+          </a>
+          <a href="#" class="account-card">
+            <i class="fas fa-cog"></i>
+            <h3>Settings</h3>
+            <p>Account preferences</p>
+          </a>
+          <a href="#" class="account-card">
+            <i class="fas fa-question-circle"></i>
+            <h3>Support</h3>
+            <p>Get help & contact us</p>
+          </a>
+        </div>
+      `;
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to log out?')) Auth.logout();
+      });
+    })();
+  </script>
+</body>
+</html>
