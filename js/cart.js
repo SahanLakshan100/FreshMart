@@ -19,10 +19,21 @@ const CartManager = (function () {
 
   function getCart() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const storedCart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      return Array.isArray(storedCart) ? storedCart.map(normalizeItem) : [];
     } catch {
       return [];
     }
+  }
+
+  function normalizeItem(item) {
+    return {
+      ...item,
+      name: item.name || 'FreshMart product',
+      price: Number(item.price) || 0,
+      icon: item.icon || '🛒',
+      quantity: Math.max(1, Number(item.quantity) || 1)
+    };
   }
 
   function saveCart(cart) {
@@ -42,7 +53,7 @@ const CartManager = (function () {
     if (existing) {
       existing.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 });
+      cart.push(normalizeItem({ ...product, quantity: 1 }));
     }
     saveCart(cart);
     return cart;

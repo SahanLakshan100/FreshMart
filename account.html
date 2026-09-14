@@ -45,7 +45,7 @@
   <script src="js/auth.js"></script>
   <script src="js/cart.js"></script>
   <script>
-    (function () {
+    (async function () {
       const container = document.getElementById('accountContent');
       const user = Auth.getCurrentUser();
 
@@ -78,7 +78,7 @@
             <h3>My Cart</h3>
             <p>${cart.length} item(s) waiting</p>
           </a>
-          <a href="#" class="account-card">
+          <a href="#orderHistory" class="account-card">
             <i class="fas fa-box"></i>
             <h3>Orders</h3>
             <p>View your order history</p>
@@ -104,7 +104,26 @@
             <p>Get help & contact us</p>
           </a>
         </div>
+        <section class="account-orders" id="orderHistory">
+          <div class="account-orders-heading"><div><span class="account-eyebrow">PURCHASES</span><h2>My Orders</h2></div><span id="orderCount" class="order-count">Loading...</span></div>
+          <div id="orderHistoryList" class="order-history-list"><p class="order-history-empty">Loading your purchases...</p></div>
+        </section>
       `;
+
+      try {
+        const orders = await API.getOrders(user.email);
+        const orderList = document.getElementById('orderHistoryList');
+        document.getElementById('orderCount').textContent = `${orders.length} order${orders.length === 1 ? '' : 's'}`;
+        orderList.innerHTML = orders.length ? orders.map(order => {
+          const items = order.items || [];
+          const total = order.totals?.total ?? 0;
+          return `<article class="order-history-item"><div><strong>${order.orderId}</strong><span>${new Date(order.createdAt).toLocaleDateString('en-GB')} · ${order.payment}</span></div><div class="order-history-products">${items.map(item => `<span>${item.name} × ${item.qty}</span>`).join('')}</div><strong class="order-history-total">${formatPrice(total)}</strong></article>`;
+        }).join('') : '<p class="order-history-empty">You have not placed any orders yet.</p>';
+      } catch (error) {
+        document.getElementById('orderCount').textContent = 'Unavailable';
+        document.getElementById('orderHistoryList').innerHTML = '<p class="order-history-empty">We could not load your purchase history. Please try again later.</p>';
+        console.error('Could not load order history', error);
+      }
 
       document.getElementById('logoutBtn').addEventListener('click', () => {
         if (confirm('Are you sure you want to log out?')) Auth.logout();

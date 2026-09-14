@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FreshMart.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+873bbb11a76ef635da8715f0371df2330f3fcb76")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2a62a4aedadb5668679c75bda58dba6dcb10cb4f")]
 [assembly: System.Reflection.AssemblyProductAttribute("FreshMart.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FreshMart.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

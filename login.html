@@ -50,7 +50,7 @@
       </form>
 
       <p class="auth-switch">
-        Don't have an account? <a href="register.html">Create one</a>
+        Don't have an account? <a href="register.html" id="registerLink">Create one</a>
       </p>
     </div>
   </div>
@@ -58,6 +58,8 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script>
+    const requestedReturnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+    if (requestedReturnUrl === 'checkout.html') document.getElementById('registerLink').href = 'register.html?returnUrl=checkout.html';
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
@@ -71,7 +73,10 @@
           email: document.getElementById('loginEmail').value,
           password: document.getElementById('loginPassword').value
         });
-        window.location.href = 'account.html';
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        window.location.href = returnUrl === 'admin.html' && Auth.isAdmin()
+          ? returnUrl
+          : returnUrl === 'checkout.html' ? returnUrl : 'account.html';
       } catch (err) {
         errEl.textContent = err.message;
         btn.disabled = false;

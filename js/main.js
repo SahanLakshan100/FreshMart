@@ -272,10 +272,10 @@
         container.innerHTML = cart.map(item => `
           <div class="cart-item" data-id="${item.id}">
             <div class="cart-item-info">
-              <span class="cart-item-icon">${item.icon}</span>
+              <span class="cart-item-icon">${item.image ? `<img src="${item.image}" alt="${item.name || 'FreshMart product'}" onerror="this.style.display='none'; this.nextElementSibling.hidden=false">` : ''}<span class="cart-item-icon-fallback" ${item.image ? 'hidden' : ''}>${item.icon || '🛒'}</span></span>
               <div>
-                <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">${formatPrice(item.price)}</div>
+                <div class="cart-item-name">${item.name || 'FreshMart product'}</div>
+                <div class="cart-item-price">${formatPrice(Number(item.price) || 0)}</div>
               </div>
             </div>
             <div class="cart-item-quantity">
@@ -322,10 +322,11 @@
 
     if (checkoutBtn) {
       checkoutBtn.addEventListener('click', () => {
-        const totals = CartManager.getTotals();
-        alert(`Order placed successfully!\n\nItems: ${totals.totalItems}\nTotal: ${formatPrice(totals.total)}\n\nThank you for shopping with FreshMart!`);
-        CartManager.clearCart();
-        renderCart();
+        if (typeof Auth === 'undefined' || !Auth.isLoggedIn()) {
+          window.location.href = 'login.html?returnUrl=checkout.html';
+          return;
+        }
+        window.location.href = 'checkout.html';
       });
     }
   }

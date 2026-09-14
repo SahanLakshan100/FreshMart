@@ -9,6 +9,7 @@ public class FreshMartDbContext(DbContextOptions<FreshMartDbContext> options) : 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -28,5 +29,14 @@ public class FreshMartDbContext(DbContextOptions<FreshMartDbContext> options) : 
             .WithMany()
             .HasForeignKey(cart => cart.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Order>().Property(order => order.Subtotal).HasPrecision(18, 2);
+        modelBuilder.Entity<Order>().Property(order => order.Delivery).HasPrecision(18, 2);
+        modelBuilder.Entity<Order>().Property(order => order.Total).HasPrecision(18, 2);
+        modelBuilder.Entity<OrderItem>().Property(item => item.UnitPrice).HasPrecision(18, 2);
+        modelBuilder.Entity<OrderItem>()
+            .HasOne(item => item.Order)
+            .WithMany(order => order.Items)
+            .HasForeignKey(item => item.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -13,8 +13,13 @@
     return;
   }
 
-  // Prefill if user is logged in
   const user = Auth.getCurrentUser();
+  if (!user) {
+    window.location.href = 'login.html?returnUrl=checkout.html';
+    return;
+  }
+
+  // Prefill the checkout form for the signed-in customer.
   if (user) {
     document.getElementById('coName').value = user.name;
     document.getElementById('coEmail').value = user.email;
@@ -23,7 +28,7 @@
   // Render cart items
   document.getElementById('checkoutItems').innerHTML = cart.map(item => `
     <div class="checkout-item">
-      <span class="checkout-item-icon">${item.icon}</span>
+      <span class="checkout-item-icon">${item.icon || '🛒'}</span>
       <div class="checkout-item-info">
         <div class="checkout-item-name">${item.name}</div>
         <div class="checkout-item-qty">Qty: ${item.quantity}</div>
@@ -74,15 +79,18 @@
       // Clear cart
       CartManager.clearCart();
 
-      // Success page (inline)
+      // Show the delivery confirmation popup after the order is stored.
       document.querySelector('.checkout-layout').outerHTML = `
-        <div class="success-box">
-          <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-          <h1>Order Placed!</h1>
-          <p>Thank you, ${name}. Your order has been confirmed.</p>
-          <div class="success-order-id">Order ID: <strong>${result.orderId}</strong></div>
-          <p class="success-note">You will receive a confirmation email at <strong>${email}</strong> shortly.</p>
-          <a href="products.html" class="btn-primary">Continue Shopping</a>
+        <div class="delivery-success-overlay" role="dialog" aria-modal="true" aria-labelledby="deliverySuccessTitle">
+          <div class="delivery-success-popup">
+            <div class="delivery-road"><i class="fas fa-truck-fast delivery-truck"></i></div>
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <h1 id="deliverySuccessTitle">Order on its way!</h1>
+            <p>Thank you, ${name}. Your FreshMart order has been confirmed.</p>
+            <div class="success-order-id">Order ID: <strong>${result.orderId}</strong></div>
+            <p class="success-note">A confirmation will be sent to <strong>${email}</strong>.</p>
+            <a href="index.html" class="btn-primary"><i class="fas fa-house"></i> Back to Home</a>
+          </div>
         </div>
       `;
 

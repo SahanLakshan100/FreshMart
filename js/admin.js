@@ -12,6 +12,10 @@
   let editingCategoryId = null;
   let editingUserId = null;
   let remoteUsers = [];
+  let productSearch = '';
+  let productCategoryFilter = 'all';
+  let categorySearch = '';
+  let userSearch = '';
   const API_BASE = 'http://localhost:5050/api';
 
   async function request(path, options = {}) {
@@ -68,12 +72,36 @@
     `).join('');
   }
 
+  function searchControl(id, value, placeholder) {
+    return `<label class="admin-search"><i class="fas fa-search"></i><input id="${id}" type="search" value="${escapeHtml(value)}" placeholder="${placeholder}" aria-label="${placeholder}"></label>`;
+  }
+
+  function updateSearchValue(event, update, renderView) {
+    const cursorPosition = event.target.selectionStart;
+    update(event.target.value);
+    renderView();
+    const input = document.getElementById(event.target.id);
+    input.focus();
+    input.setSelectionRange(cursorPosition, cursorPosition);
+  }
+
+  function categoryFilterControl() {
+    return `<label class="admin-filter"><span>Category</span><select id="productCategoryFilter" aria-label="Filter products by category"><option value="all">All categories</option>${categories.filter(category => category.id !== 'all').map(category => `<option value="${escapeHtml(category.id)}" ${category.id === productCategoryFilter ? 'selected' : ''}>${escapeHtml(category.label)}</option>`).join('')}</select></label>`;
+  }
+
   function renderProducts() {
     const product = products.find(item => item.id === editingProductId);
+    const query = productSearch.trim().toLowerCase();
+    const visibleProducts = products.filter(item => {
+      const category = categories.find(categoryItem => categoryItem.id === item.category);
+      const matchesSearch = !query || `${item.name} ${item.category} ${category?.label || ''}`.toLowerCase().includes(query);
+      const matchesCategory = productCategoryFilter === 'all' || item.category === productCategoryFilter;
+      return matchesSearch && matchesCategory;
+    });
     sectionEl.innerHTML = `
       <div class="admin-section-heading">
         <div><p class="admin-eyebrow">CATALOG</p><h2>Products</h2></div>
-        <button class="admin-primary" id="newProductBtn"><i class="fas fa-plus"></i> New product</button>
+        <div class="admin-heading-actions">${searchControl('productSearch', productSearch, 'Search products')}${categoryFilterControl()}<button class="admin-primary" id="newProductBtn"><i class="fas fa-plus"></i> New product</button></div>
       </div>
       <div class="admin-layout">
         <form class="admin-form admin-editor ${product ? 'is-editing' : ''}" id="productForm">
@@ -90,10 +118,12 @@
           <div class="admin-form-actions"><button type="submit" class="admin-primary"><i class="fas fa-save"></i> ${product ? 'Update product' : 'Add product'}</button>${product ? '<button type="button" class="admin-secondary" id="cancelProductBtn">Cancel</button>' : ''}</div>
         </form>
         <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th></th></tr></thead><tbody>
-          ${products.map(item => `<tr><td><div class="admin-product"><img src="${escapeHtml(item.image)}" alt=""><span>${escapeHtml(item.name)}</span></div></td><td>${escapeHtml((categories.find(category => category.id === item.category) || {}).label || item.category)}</td><td>${formatPrice(item.price)}</td><td class="admin-actions"><button class="icon-action edit-product" data-id="${item.id}" title="Edit product" aria-label="Edit ${escapeHtml(item.name)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-product" data-id="${item.id}" title="Delete product" aria-label="Delete ${escapeHtml(item.name)}"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
+          ${visibleProducts.map(item => `<tr><td><div class="admin-product"><img src="${escapeHtml(item.image)}" alt=""><span>${escapeHtml(item.name)}</span></div></td><td>${escapeHtml((categories.find(category => category.id === item.category) || {}).label || item.category)}</td><td>${formatPrice(item.price)}</td><td class="admin-actions"><button class="icon-action edit-product" data-id="${item.id}" title="Edit product" aria-label="Edit ${escapeHtml(item.name)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-product" data-id="${item.id}" title="Delete product" aria-label="Delete ${escapeHtml(item.name)}"><i class="fas fa-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="4">No products match your search.</td></tr>'}
         </tbody></table></div>
       </div>
     `;
+    document.getElementById('productSearch').addEventListener('input', event => updateSearchValue(event, value => { productSearch = value; }, renderProducts));
+    document.getElementById('productCategoryFilter').addEventListener('change', event => { productCategoryFilter = event.target.value; renderProducts(); });
     document.getElementById('newProductBtn').addEventListener('click', () => { editingProductId = null; renderProducts(); });
     document.getElementById('productForm').addEventListener('submit', saveProduct);
     document.getElementById('cancelProductBtn')?.addEventListener('click', () => { editingProductId = null; renderProducts(); });
@@ -142,13 +172,16 @@
 
   function renderCategories() {
     const category = categories.find(item => item.id === editingCategoryId);
+    const query = categorySearch.trim().toLowerCase();
+    const visibleCategories = categories.filter(item => item.id !== 'all' && (!query || `${item.label} ${item.id}`.toLowerCase().includes(query)));
     sectionEl.innerHTML = `
-      <div class="admin-section-heading"><div><p class="admin-eyebrow">TAXONOMY</p><h2>Categories</h2></div><button class="admin-primary" id="newCategoryBtn"><i class="fas fa-plus"></i> New category</button></div>
+      <div class="admin-section-heading"><div><p class="admin-eyebrow">TAXONOMY</p><h2>Categories</h2></div><div class="admin-heading-actions">${searchControl('categorySearch', categorySearch, 'Search categories')}<button class="admin-primary" id="newCategoryBtn"><i class="fas fa-plus"></i> New category</button></div></div>
       <div class="admin-layout">
         <form class="admin-form admin-editor" id="categoryForm"><h3>${category ? 'Edit category' : 'Add category'}</h3><input type="hidden" id="categoryId" value="${category ? escapeHtml(category.id) : ''}"><label>Category name<input id="categoryLabel" required value="${category ? escapeHtml(category.label) : ''}" placeholder="e.g. Fresh Produce"></label><label>Category ID<input id="categorySlug" required value="${category ? escapeHtml(category.id) : ''}" placeholder="fresh-produce" ${category ? 'readonly' : ''}></label><label>Image URL<input id="categoryImage" type="url" required value="${category ? escapeHtml(category.image) : ''}" placeholder="https://..."></label><div class="admin-form-actions"><button type="submit" class="admin-primary"><i class="fas fa-save"></i> ${category ? 'Update category' : 'Add category'}</button>${category ? '<button type="button" class="admin-secondary" id="cancelCategoryBtn">Cancel</button>' : ''}</div></form>
-        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Category</th><th>Products</th><th></th></tr></thead><tbody>${categories.filter(item => item.id !== 'all').map(item => `<tr><td><div class="admin-product"><img src="${escapeHtml(item.image)}" alt=""><span>${escapeHtml(item.label)}</span></div></td><td>${products.filter(product => product.category === item.id).length}</td><td class="admin-actions"><button class="icon-action edit-category" data-id="${escapeHtml(item.id)}" title="Edit category" aria-label="Edit ${escapeHtml(item.label)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-category" data-id="${escapeHtml(item.id)}" title="Delete category" aria-label="Delete ${escapeHtml(item.label)}"><i class="fas fa-trash"></i></button></td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Category</th><th>Products</th><th></th></tr></thead><tbody>${visibleCategories.map(item => `<tr><td><div class="admin-product"><img src="${escapeHtml(item.image)}" alt=""><span>${escapeHtml(item.label)}</span></div></td><td>${products.filter(product => product.category === item.id).length}</td><td class="admin-actions"><button class="icon-action edit-category" data-id="${escapeHtml(item.id)}" title="Edit category" aria-label="Edit ${escapeHtml(item.label)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-category" data-id="${escapeHtml(item.id)}" title="Delete category" aria-label="Delete ${escapeHtml(item.label)}"><i class="fas fa-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="3">No categories match your search.</td></tr>'}</tbody></table></div>
       </div>
     `;
+    document.getElementById('categorySearch').addEventListener('input', event => updateSearchValue(event, value => { categorySearch = value; }, renderCategories));
     document.getElementById('newCategoryBtn').addEventListener('click', () => { editingCategoryId = null; renderCategories(); });
     document.getElementById('categoryForm').addEventListener('submit', saveCategory);
     document.getElementById('cancelCategoryBtn')?.addEventListener('click', () => { editingCategoryId = null; renderCategories(); });
@@ -190,10 +223,13 @@
 
   function renderUsers() {
     const user = remoteUsers.find(item => String(item.id) === String(editingUserId));
+    const query = userSearch.trim().toLowerCase();
+    const visibleUsers = remoteUsers.filter(item => !query || `${item.name} ${item.email} ${item.role}`.toLowerCase().includes(query));
     sectionEl.innerHTML = `
-      <div class="admin-section-heading"><div><p class="admin-eyebrow">ACCESS</p><h2>Users</h2></div><button class="admin-primary" id="newUserBtn"><i class="fas fa-plus"></i> New user</button></div>
+      <div class="admin-section-heading"><div><p class="admin-eyebrow">ACCESS</p><h2>Users</h2></div><div class="admin-heading-actions">${searchControl('userSearch', userSearch, 'Search users')}<button class="admin-primary" id="newUserBtn"><i class="fas fa-plus"></i> New user</button></div></div>
       <div class="admin-layout"><form class="admin-form admin-editor" id="userForm"><h3>${user ? 'Edit user' : 'Create user'}</h3><input type="hidden" id="userId" value="${user ? escapeHtml(user.id) : ''}"><label>Full name<input id="userName" required value="${user ? escapeHtml(user.name) : ''}"></label><label>Email<input id="userEmail" type="email" required value="${user ? escapeHtml(user.email) : ''}"></label><label>Password<input id="userPassword" type="password" ${user ? '' : 'required'} placeholder="${user ? 'Leave blank to keep current' : 'At least 6 characters'}"></label><label>Role<select id="userRole"><option value="customer" ${!user || user.role !== 'admin' ? 'selected' : ''}>Customer</option><option value="admin" ${user && user.role === 'admin' ? 'selected' : ''}>Administrator</option></select></label><div class="admin-form-actions"><button type="submit" class="admin-primary"><i class="fas fa-save"></i> ${user ? 'Update user' : 'Create user'}</button>${user ? '<button type="button" class="admin-secondary" id="cancelUserBtn">Cancel</button>' : ''}</div></form>
-      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>User</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${remoteUsers.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.email)}</small></td><td><span class="role-badge ${item.role}">${item.role === 'admin' ? 'Administrator' : 'Customer'}</span></td><td>${new Date(item.createdAt).toLocaleDateString('en-GB')}</td><td class="admin-actions"><button class="icon-action edit-user" data-id="${escapeHtml(item.id)}" title="Edit user" aria-label="Edit ${escapeHtml(item.name)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-user" data-id="${escapeHtml(item.id)}" title="Delete user" aria-label="Delete ${escapeHtml(item.name)}"><i class="fas fa-trash"></i></button></td></tr>`).join('')}</tbody></table></div></div>`;
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>User</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${visibleUsers.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.email)}</small></td><td><span class="role-badge ${item.role}">${item.role === 'admin' ? 'Administrator' : 'Customer'}</span></td><td>${new Date(item.createdAt).toLocaleDateString('en-GB')}</td><td class="admin-actions"><button class="icon-action edit-user" data-id="${escapeHtml(item.id)}" title="Edit user" aria-label="Edit ${escapeHtml(item.name)}"><i class="fas fa-pen"></i></button><button class="icon-action danger delete-user" data-id="${escapeHtml(item.id)}" title="Delete user" aria-label="Delete ${escapeHtml(item.name)}"><i class="fas fa-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="4">No users match your search.</td></tr>'}</tbody></table></div></div>`;
+    document.getElementById('userSearch').addEventListener('input', event => updateSearchValue(event, value => { userSearch = value; }, renderUsers));
     document.getElementById('newUserBtn').addEventListener('click', () => { editingUserId = null; renderUsers(); });
     document.getElementById('userForm').addEventListener('submit', saveUser);
     document.getElementById('cancelUserBtn')?.addEventListener('click', () => { editingUserId = null; renderUsers(); });

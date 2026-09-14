@@ -44,13 +44,37 @@ public class Order
 {
     public int Id { get; set; }
     public required string OrderId { get; set; }
+    public required string CustomerName { get; set; }
+    public required string CustomerEmail { get; set; }
+    public required string CustomerPhone { get; set; }
+    public required string ShippingAddress { get; set; }
+    public required string ShippingCity { get; set; }
+    public required string ShippingPostalCode { get; set; }
     public required string CustomerJson { get; set; }
     public required string ShippingJson { get; set; }
     public required string Payment { get; set; }
     public required string ItemsJson { get; set; }
     public required string TotalsJson { get; set; }
+    public int TotalItems { get; set; }
+    public decimal Subtotal { get; set; }
+    public decimal Delivery { get; set; }
+    public decimal Total { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public List<OrderItem> Items { get; set; } = [];
 }
+
+public class OrderItem
+{
+    public int Id { get; set; }
+    public int OrderId { get; set; }
+    public Order Order { get; set; } = null!;
+    public int ProductId { get; set; }
+    public required string ProductName { get; set; }
+    public decimal UnitPrice { get; set; }
+    public int Quantity { get; set; }
+}
+
+public record OrderItemRequest(int Id, string Name, decimal Price, int Qty);
 
 public class Cart
 {

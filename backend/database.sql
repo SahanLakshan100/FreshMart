@@ -50,12 +50,38 @@ BEGIN
     CREATE TABLE dbo.Orders (
         Id INT IDENTITY(1,1) CONSTRAINT PK_Orders PRIMARY KEY,
         OrderId NVARCHAR(40) NOT NULL CONSTRAINT UQ_Orders_OrderId UNIQUE,
+        CustomerName NVARCHAR(150) NOT NULL,
+        CustomerEmail NVARCHAR(320) NOT NULL,
+        CustomerPhone NVARCHAR(40) NOT NULL,
+        ShippingAddress NVARCHAR(500) NOT NULL,
+        ShippingCity NVARCHAR(150) NOT NULL,
+        ShippingPostalCode NVARCHAR(30) NOT NULL,
         CustomerJson NVARCHAR(MAX) NOT NULL,
         ShippingJson NVARCHAR(MAX) NOT NULL,
         Payment NVARCHAR(40) NOT NULL,
         ItemsJson NVARCHAR(MAX) NOT NULL,
         TotalsJson NVARCHAR(MAX) NOT NULL,
+        TotalItems INT NOT NULL,
+        Subtotal DECIMAL(18,2) NOT NULL,
+        Delivery DECIMAL(18,2) NOT NULL,
+        Total DECIMAL(18,2) NOT NULL,
         CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Orders_CreatedAt DEFAULT SYSUTCDATETIME()
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.OrderItems', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.OrderItems (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_OrderItems PRIMARY KEY,
+        OrderId INT NOT NULL,
+        ProductId INT NOT NULL,
+        ProductName NVARCHAR(250) NOT NULL,
+        UnitPrice DECIMAL(18,2) NOT NULL,
+        Quantity INT NOT NULL,
+        CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId)
+            REFERENCES dbo.Orders(Id)
+            ON DELETE CASCADE
     );
 END
 GO

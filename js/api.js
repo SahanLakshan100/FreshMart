@@ -52,6 +52,7 @@ const API = (function () {
   }
 
   async function placeOrder(orderData) { return request('/orders', { method: 'POST', body: JSON.stringify(orderData) }); }
+  async function getOrders(email) { return request(`/orders?email=${encodeURIComponent(email)}`); }
   async function login(credentials) { return request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }); }
   async function register(details) { return request('/auth/register', { method: 'POST', body: JSON.stringify(details) }); }
   async function requestUser(details) { return request('/users', { method: 'POST', body: JSON.stringify(details) }); }
@@ -66,5 +67,5 @@ const API = (function () {
     products.splice(0, products.length, ...productResult.products);
   }
 
-  return { getCategories, getProducts, getProductById, getFeaturedProducts, getRelatedProducts, placeOrder, login, register, requestUser, getCart, saveCart, loadCatalog };
+  return { getCategories, getProducts, getProductById, getFeaturedProducts, getRelatedProducts, placeOrder, getOrders, login, register, requestUser, getCart, saveCart, loadCatalog };
 })();

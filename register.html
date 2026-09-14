@@ -73,7 +73,8 @@
           email: document.getElementById('regEmail').value,
           password: document.getElementById('regPassword').value
         });
-        window.location.href = 'account.html';
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        window.location.href = returnUrl === 'checkout.html' ? returnUrl : 'account.html';
       } catch (err) {
         errEl.textContent = err.message;
         btn.disabled = false;
