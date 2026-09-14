@@ -4,6 +4,18 @@
 
 const CartManager = (function () {
   const STORAGE_KEY = 'freshmart_cart';
+  const SESSION_KEY = 'freshmart_cart_session';
+
+  function getSessionId() {
+    let sessionId = localStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      sessionId = typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `cart-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(SESSION_KEY, sessionId);
+    }
+    return sessionId;
+  }
 
   function getCart() {
     try {
@@ -15,6 +27,10 @@ const CartManager = (function () {
 
   function saveCart(cart) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    if (typeof API !== 'undefined') {
+      const user = typeof Auth !== 'undefined' ? Auth.getCurrentUser() : null;
+      API.saveCart(getSessionId(), cart, user?.id || null).catch(error => console.error('Could not save cart to database', error));
+    }
     updateCartBadge();
     // Dispatch event so pages can react
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
@@ -71,6 +87,21 @@ const CartManager = (function () {
     }
   }
 
+  async function loadCartFromDatabase() {
+    if (typeof API === 'undefined') return;
+    try {
+      const result = await API.getCart(getSessionId());
+      const items = JSON.parse(result.items || '[]');
+      if (Array.isArray(items)) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        updateCartBadge();
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: items }));
+      }
+    } catch (error) {
+      console.error('Could not load cart from database', error);
+    }
+  }
+
   return {
     getCart,
     addToCart,
@@ -78,9 +109,13 @@ const CartManager = (function () {
     updateQuantity,
     clearCart,
     getTotals,
-    updateCartBadge
+    updateCartBadge,
+    loadCartFromDatabase
   };
 })();
 
 // Auto-update badge on page load
-document.addEventListener('DOMContentLoaded', CartManager.updateCartBadge);
+document.addEventListener('DOMContentLoaded', () => {
+  CartManager.updateCartBadge();
+  CartManager.loadCartFromDatabase();
+});

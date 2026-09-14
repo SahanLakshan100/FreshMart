@@ -79,3 +79,4 @@ F:\SupermarketWeb\backend\obj\Debug\net10.0\refint\FreshMart.Api.dll
 F:\SupermarketWeb\backend\obj\Debug\net10.0\FreshMart.Api.pdb
 F:\SupermarketWeb\backend\obj\Debug\net10.0\FreshMart.Api.genruntimeconfig.cache
 F:\SupermarketWeb\backend\obj\Debug\net10.0\ref\FreshMart.Api.dll
+F:\SupermarketWeb\backend\obj\Debug\net10.0\FreshMart.Api.sourcelink.json

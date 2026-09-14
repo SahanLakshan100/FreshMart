@@ -102,6 +102,11 @@
       await API.loadCatalog();
     } catch (error) {
       console.error('Could not load catalog from database', error);
+      const catalogError = document.createElement('div');
+      catalogError.className = 'error-box';
+      catalogError.textContent = 'Could not load products and categories from the database. Start the FreshMart API and refresh this page.';
+      document.querySelector('.page-content')?.prepend(catalogError);
+      return;
     }
   }
 

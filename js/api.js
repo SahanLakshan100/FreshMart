@@ -54,6 +54,11 @@ const API = (function () {
   async function placeOrder(orderData) { return request('/orders', { method: 'POST', body: JSON.stringify(orderData) }); }
   async function login(credentials) { return request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }); }
   async function register(details) { return request('/auth/register', { method: 'POST', body: JSON.stringify(details) }); }
+  async function requestUser(details) { return request('/users', { method: 'POST', body: JSON.stringify(details) }); }
+  async function getCart(sessionId) { return request(`/cart?sessionId=${encodeURIComponent(sessionId)}`); }
+  async function saveCart(sessionId, items, userId = null) {
+    return request('/cart', { method: 'PUT', body: JSON.stringify({ sessionId, userId, itemsJson: JSON.stringify(items) }) });
+  }
 
   async function loadCatalog() {
     const [loadedCategories, productResult] = await Promise.all([getCategories(), getProducts({ perPage: 1000 })]);
@@ -61,5 +66,5 @@ const API = (function () {
     products.splice(0, products.length, ...productResult.products);
   }
 
-  return { getCategories, getProducts, getProductById, getFeaturedProducts, getRelatedProducts, placeOrder, login, register, loadCatalog };
+  return { getCategories, getProducts, getProductById, getFeaturedProducts, getRelatedProducts, placeOrder, login, register, requestUser, getCart, saveCart, loadCatalog };
 })();

@@ -60,6 +60,21 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID(N'dbo.Cart', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Cart (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_Cart PRIMARY KEY,
+        SessionId NVARCHAR(100) NOT NULL CONSTRAINT UQ_Cart_SessionId UNIQUE,
+        UserId INT NULL,
+        ItemsJson NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Cart_ItemsJson DEFAULT N'[]',
+        UpdatedAt DATETIME2 NOT NULL CONSTRAINT DF_Cart_UpdatedAt DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT FK_Cart_Users FOREIGN KEY (UserId)
+            REFERENCES dbo.Users(Id)
+            ON DELETE SET NULL
+    );
+END
+GO
+
 IF NOT EXISTS (SELECT 1 FROM dbo.Categories)
 BEGIN
     INSERT INTO dbo.Categories (Slug, Label, Icon, Image) VALUES
@@ -118,6 +133,53 @@ BEGIN
 END
 GO
 
+-- Seed the branded catalog used by the storefront. This block is safe to run
+-- repeatedly: product records are replaced, while users, orders, and categories remain.
+DELETE FROM dbo.Products;
+
+;WITH CategoryItems AS (
+    SELECT * FROM (VALUES
+        (N'desserts', N'Keells Chocolate Cake|Keells Vanilla Swiss Roll|MD Caramel Pudding|Kandos Chocolate Eclairs|Keells Fruit Trifle|Keells Jelly Dessert Cups|Keells Strawberry Cheesecake|Keells Chocolate Mousse|Watalappan|Elephant House Ice Cream Tub'),
+        (N'snacks', N'Munchee Potato Chips|Rancrisp Cheese Puffs|Keells Spicy Mixture|Kist Salted Peanuts|Magic Pop Popcorn|Keells Cassava Chips|Kurkure Corn Snacks|Keells Trail Mix|Keells Roasted Chickpeas|Keells Plantain Chips'),
+        (N'biscuits', N'Munchee Cream Crackers|Munchee Chocolate Cream Biscuits|Maliban Milk Shortcake|Munchee Ginger Biscuits|Maliban Digestive Biscuits|Munchee Butter Cookies|Maliban Chocolate Chip Cookies|Munchee Wafer Biscuits|Maliban Salt Biscuits|Munchee Marie Biscuits'),
+        (N'coffee', N'Bru Instant Coffee|Nescafe Classic|Nescafe Gold|Coffee Beans|Nescafe 3 in 1 Sachets|Illy Espresso Roast|Decaf Ground Coffee|Moccona Mocha Mix|Iced Coffee Mix|Nescafe Cappuccino Sachets'),
+        (N'eggs', N'Keells Free-Range Eggs|Keells Large White Eggs|Keells Brown Eggs|Omega 3 Eggs|Organic Eggs|Quail Eggs|Liquid Egg Whites|Farm Fresh Eggs|Keells Medium Eggs|Keells Jumbo Eggs'),
+        (N'bakery', N'Keells White Bread|Keells Whole Wheat Bread|Keells Butter Croissants|Keells Chocolate Croissants|Keells Burger Buns|Keells Hot Dog Rolls|Keells Garlic Bread|Keells Dinner Rolls|Keells Cinnamon Danish|Keells Multigrain Loaf'),
+        (N'family-beverages', N'Coca-Cola 1.5L|Schweppes Ginger Ale|Sprite 1.5L|Fanta Orange 1.5L|Elephant House Ginger Beer|Schweppes Soda Water|Schweppes Tonic Water|Fruity Family Punch|Sparkling Apple Drink|Mango Nectar 1L'),
+        (N'individual-beverages', N'Coca-Cola 500ml|Fanta Orange 500ml|Sprite 500ml|Lipton Ice Tea Bottle|Red Bull Energy Drink|100PLUS Sports Drink|Kist Fruit Juice Bottle|Elephant House Ginger Beer Bottle|Kist Sparkling Water|Kombucha Drink'),
+        (N'water', N'Aquafresh Mineral Water 500ml|Aquafresh Mineral Water 1L|Aquafresh Mineral Water 1.5L|Aquafresh Spring Water 5L|Aquafresh Family Water 6L|Sparkling Water 750ml|Alkaline Water|Flavoured Water Lemon|Flavoured Water Berry|Kids Water Bottle'),
+        (N'malt-chocolate', N'Milo Chocolate Malt Drink|Milo Classic Malt Powder|Nestle Nesquik Chocolate Milk|Milo Activ-Go Powder|Milo Kids Chocolate Drink|Cadbury Drinking Chocolate|Milo Malt Drink Sachets|Cadbury Hot Chocolate Powder|Choco Mocha Mix|Ensure Chocolate Protein Drink'),
+        (N'milk', N'Anchor Full Cream Milk 1L|Highland Low Fat Milk|Anchor Full Cream Milk Powder|Anchor Skimmed Milk Powder|Nestle Milkmaid Condensed Milk|Carnation Evaporated Milk|Kotmale UHT Chocolate Milk|Kotmale UHT Low Fat Milk|Lactose Free Milk|Coconut Milk'),
+        (N'tea', N'Dilmah English Breakfast Tea|Mlesna Ceylon Black Tea|Earl Grey Tea|Dilmah Green Tea|Ginger Tea|Lemon Tea|Peppermint Tea|Chamomile Tea|Dilmah Tea Bags 100 Pack|Iced Tea Blend'),
+        (N'cheese', N'Kotmale Cheddar Cheese|Anchor Mozzarella Cheese|Philadelphia Cream Cheese|Parmesan Cheese|Kraft Cheese Slices|Edam Cheese|Gouda Cheese|Blue Cheese|Cottage Cheese|Kraft Cheese Spread'),
+        (N'yoghurts-curd', N'Anchor Greek Style Yoghurt|Kotmale Natural Set Yoghurt|Highland Strawberry Yoghurt|Anchor Vanilla Yoghurt|Highland Mango Yoghurt|Drinking Yoghurt|Highland Plain Curd|Buffalo Curd|Low Fat Yoghurt|Family Yoghurt Tub'),
+        (N'frozen-snacks', N'Ocean Fresh Fish Fingers|McCain Chicken Nuggets|Spring Home Vegetable Spring Rolls|Keells Samosa Pack|McCain French Fries|McCain Hash Browns|Keells Frozen Cutlets|Cheese Balls|Keells Chicken Sausage|Shana Frozen Paratha'),
+        (N'pasta-noodles', N'Prima Spaghetti|Prima Penne Pasta|Prima Macaroni|Shan Egg Noodles|Maggi Chicken Noodles|Maggi Vegetable Noodles|Thai Choice Rice Noodles|Lasagne Sheets|Prima Fusilli Pasta|Whole Wheat Pasta')
+    ) AS seeds(Slug, ItemNames)
+), ProductItems AS (
+    SELECT category.Id AS CategoryId, category.Image, item.Name
+    FROM CategoryItems seed
+    INNER JOIN dbo.Categories category ON category.Slug = seed.Slug
+    CROSS APPLY (SELECT LTRIM(RTRIM(value)) AS Name FROM STRING_SPLIT(seed.ItemNames, N'|')) item
+)
+INSERT INTO dbo.Products (Name, Price, Unit, Featured, Image, CategoryId)
+SELECT item.Name,
+       250 + ABS(CHECKSUM(item.Name)) % 1250,
+       N'pack',
+       0,
+       item.Image,
+    item.CategoryId
+FROM ProductItems item;
+GO
+
 -- Create the first administrator once the database exists.
 -- Replace the password hash with one generated by the API before using this in production.
 -- The API's admin user creation endpoint hashes passwords automatically.
+
+SELECT DB_NAME() AS DatabaseName;
+SELECT 'Categories' AS TableName, COUNT(*) AS Records FROM dbo.Categories
+UNION ALL SELECT 'Products', COUNT(*) FROM dbo.Products
+UNION ALL SELECT 'Users', COUNT(*) FROM dbo.Users
+UNION ALL SELECT 'Orders', COUNT(*) FROM dbo.Orders
+UNION ALL SELECT 'Cart', COUNT(*) FROM dbo.Cart;
+GO

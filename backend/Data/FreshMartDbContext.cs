@@ -9,6 +9,7 @@ public class FreshMartDbContext(DbContextOptions<FreshMartDbContext> options) : 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Cart> Carts => Set<Cart>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,5 +22,11 @@ public class FreshMartDbContext(DbContextOptions<FreshMartDbContext> options) : 
             .WithMany(category => category.Products)
             .HasForeignKey(product => product.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Cart>().HasIndex(cart => cart.SessionId).IsUnique();
+        modelBuilder.Entity<Cart>()
+            .HasOne(cart => cart.User)
+            .WithMany()
+            .HasForeignKey(cart => cart.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

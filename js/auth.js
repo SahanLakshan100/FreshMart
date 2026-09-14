@@ -5,30 +5,6 @@
 
 const Auth = (function () {
   const USER_KEY = 'freshmart_user';
-  const USERS_KEY = 'freshmart_users';
-
-  // ---------- STORAGE HELPERS ----------
-  function getUsers() {
-    try {
-      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-      if (!users.some(user => user.role === 'admin')) {
-        users.push({
-          id: 'u_admin',
-          name: 'FreshMart Admin',
-          email: 'admin@freshmart.lk',
-          password: btoa('admin123'),
-          role: 'admin',
-          createdAt: new Date().toISOString()
-        });
-        saveUsers(users);
-      }
-      return users;
-    } catch { return []; }
-  }
-
-  function saveUsers(users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
 
   // ---------- SESSION ----------
   function getCurrentUser() {
@@ -103,45 +79,16 @@ const Auth = (function () {
     if (!isAdmin()) throw new Error('Administrator access required');
     if (!name || !email || !password) throw new Error('All fields are required');
     if (password.length < 6) throw new Error('Password must be at least 6 characters');
-
-    const users = getUsers();
-    if (users.some(user => user.email.toLowerCase() === email.trim().toLowerCase())) {
-      throw new Error('An account with this email already exists');
-    }
-
-    users.push({
-      id: 'u_' + Date.now().toString(36),
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password: btoa(password),
-      role: role === 'admin' ? 'admin' : 'customer',
-      createdAt: new Date().toISOString()
-    });
-    saveUsers(users);
+    if (typeof API === 'undefined') throw new Error('Database API is not loaded');
+    return API.requestUser({ name, email, password, role });
   }
 
   function updateUser(id, changes) {
-    if (!isAdmin()) throw new Error('Administrator access required');
-    const users = getUsers();
-    const user = users.find(item => item.id === id);
-    if (!user) throw new Error('User not found');
-    if (user.id === getCurrentUser().id && changes.role !== 'admin') {
-      throw new Error('You cannot remove your own administrator access');
-    }
-    if (changes.email && users.some(item => item.id !== id && item.email === changes.email.toLowerCase().trim())) {
-      throw new Error('An account with this email already exists');
-    }
-    user.name = changes.name.trim();
-    user.email = changes.email.toLowerCase().trim();
-    user.role = changes.role === 'admin' ? 'admin' : 'customer';
-    if (changes.password) user.password = btoa(changes.password);
-    saveUsers(users);
+    throw new Error('Use the database API to update users');
   }
 
   function deleteUser(id) {
-    if (!isAdmin()) throw new Error('Administrator access required');
-    if (id === getCurrentUser().id) throw new Error('You cannot delete your own account');
-    saveUsers(getUsers().filter(user => user.id !== id));
+    throw new Error('Use the database API to delete users');
   }
 
   document.addEventListener('DOMContentLoaded', updateAuthUI);
@@ -153,7 +100,6 @@ const Auth = (function () {
     getCurrentUser,
     isLoggedIn,
     isAdmin,
-    getUsers,
     createUser,
     updateUser,
     deleteUser,
